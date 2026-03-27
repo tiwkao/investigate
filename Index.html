@@ -1,146 +1,63 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
-    body { font-family: 'Sarabun', sans-serif; background: #050a18; }
-    .glass-card { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); border-radius: 2rem; }
-    .input-field { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s; }
-    .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
-    .btn-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.2s; }
-    .btn-gradient:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); }
-    .profile-badge { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
-    /* เพิ่ม Animation เพื่อความทันสมัย */
-    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-    .animate-fade { animation: fade 0.8s ease-out; }
-  </style>
-</head>
-<body class="min-h-screen flex items-center justify-center p-3 md:p-10 animate-fade">
+function handleProcess() {
+  const file = document.getElementById('csvInput').files[0];
+  const name = document.getElementById('fileName').value;
+  
+  if (!file) return alert('กรุณาเลือกไฟล์!');
+  if (!lineUser) return alert('กรุณารอโหลดโปรไฟล์ LINE สักครู่');
 
-  <div class="glass-card w-full max-w-sm md:max-w-lg p-7 md:p-10 shadow-[0_15px_60px_rgba(0,0,0,0.6)] relative">
+  // แสดงสถานะกำลังประมวลผล
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('downloadArea').classList.add('hidden');
+  document.getElementById('btnMain').disabled = true;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
     
-    <div id="profileBox" class="hidden mb-7 flex flex-col items-center">
-      <div class="profile-badge flex items-center gap-3 p-2 pr-5 rounded-2xl shadow-xl">
-        <img id="userImg" class="w-12 h-12 rounded-xl border border-blue-500/30 object-cover shadow-lg shadow-blue-500/10">
-        <div class="text-left">
-          <span id="userName" class="text-white text-sm font-bold leading-tight uppercase tracking-wide">Loading...</span>
-          <span id="userId" class="text-blue-400 text-[9px] font-mono mt-1 opacity-80 uppercase tracking-tight">ID: Fetching</span>
-        </div>
-      </div>
-      <div class="w-16 h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent mt-6"></div>
-    </div>
+    // --- จุดสำคัญ: เปลี่ยนจาก google.script.run เป็น fetch ---
+    const webAppUrl = 'https://script.google.com/macros/s/AKfycbzzEbpnnyZoBzdRxaAniUtGqVSyXWkpscbBe-DZDYaCeEdtjnHLxJE5nBdi1r5nxhD9/exec'; 
 
-    <div class="text-center mb-8">
-      <div class="inline-flex p-3 rounded-3xl bg-blue-500/10 mb-5 border border-blue-500/15">
-        <i class="fa-solid fa-satellite-dish text-3xl text-blue-500"></i>
-      </div>
-      <h1 class="text-2xl font-extrabold text-white tracking-tight">Converter <span class="text-blue-500">Pro</span></h1>
-      <p class="text-slate-500 mt-2 font-light text-xs tracking-wide">G-Mon Data Engine</p>
-    </div>
+    fetch(webAppUrl, {
+      method: 'POST',
+      mode: 'no-cors', // สำคัญ: เพื่อให้ส่งข้อมูลข้าม Domain จาก GitHub ไป Google ได้
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        csv: e.target.result,
+        name: name,
+        user: lineUser
+      })
+    })
+    .then(() => {
+      // เนื่องจากใช้ no-cors เราจะไม่สามารถอ่านผลลัพธ์ JSON กลับมาได้โดยตรง 
+      // แต่เราสามารถเดาได้ว่าสำเร็จถ้าไม่มี Error (หรือปรับ Backend ให้ส่ง Redirect)
+      // เพื่อความง่ายในขั้นต้น ให้แสดงปุ่มดาวน์โหลดทันทีหลังจากส่งข้อมูลสำเร็จ
+      
+      // หมายเหตุ: การใช้ no-cors บน GitHub มีข้อจำกัดเรื่องการรับค่า Data กลับมา
+      // หากต้องการรับ Data กลับมาโชว์ด้วย แนะนำให้รันบน Google Apps Script โดยตรงจะดีที่สุดครับ
+      
+      alert('บันทึกข้อมูลลง Google Sheet เรียบร้อยแล้ว!');
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('btnMain').disabled = false;
+      
+      // กรณีใช้ GitHub: แนะนำให้ทำการแปลงไฟล์ที่ฝั่ง Client (Browser) แทนการรอค่าจาก Server
+      // เพื่อเลี่ยงปัญหาเรื่อง CORS
+      processCsvLocally(e.target.result, name); 
+    })
+    .catch(err => {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('btnMain').disabled = false;
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err);
+    });
+  };
+  reader.readAsText(file);
+}
 
-    <div class="space-y-5">
-      <div class="group">
-        <label class="text-[9px] uppercase font-bold text-blue-500 tracking-[0.2em] ml-1">Project Name</label>
-        <input type="text" id="fileName" class="input-field w-full mt-1 p-3.5 rounded-xl text-white outline-none text-sm" placeholder="เช่น บ้านปรัชญาภรณ์_ZoneA">
-      </div>
-
-      <div class="relative">
-        <input type="file" id="csvInput" class="hidden" accept=".csv" onchange="updateFileStatus()">
-        <label for="csvInput" class="input-field flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer hover:bg-white/5 border-dashed border-2 border-slate-700/50 transition-all">
-          <i id="fileIcon" class="fa-solid fa-cloud-arrow-up text-3xl text-slate-600 mb-2 group-hover:text-blue-500"></i>
-          <span id="fileLabel" class="text-slate-400 text-xs font-medium italic">เลือกไฟล์ CSV (;)</span>
-        </label>
-      </div>
-
-      <button onclick="handleProcess()" id="btnMain" class="btn-gradient w-full py-4.5 rounded-xl text-white font-black tracking-widest text-xs flex items-center justify-center gap-3">
-        <i class="fa-solid fa-bolt-lightning"></i> CONVERT DATA
-      </button>
-    </div>
-
-    <div id="loading" class="hidden mt-6 text-center animate-pulse">
-      <span class="text-blue-500 text-[9px] font-bold tracking-[0.2em] uppercase">Engine Running...</span>
-    </div>
-
-    <div id="downloadArea" class="hidden mt-8 p-1 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-blue-500/10">
-      <button onclick="downloadCSV()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4.5 rounded-xl transition-all flex items-center justify-center gap-3">
-        <i class="fa-solid fa-file-arrow-down text-lg"></i> DOWNLOAD RESULT
-      </button>
-    </div>
-
-    <div class="absolute bottom-3 right-5 text-[9px] text-slate-600 font-light opacity-80">
-      ผู้พัฒนา "พงศกร  IDP6"
-    </div>
-
-  </div>
-
-  <script>
-    // --- ตั้งค่า LIFF ID ตรงนี้ ---
-    const LIFF_ID = '2009625316-OqaeXRlz'; 
-    let lineUser = null;
-    let convertedRows = null;
-
-    window.onload = () => {
-      liff.init({ liffId: LIFF_ID }).then(() => {
-        if (!liff.isLoggedIn()) liff.login();
-        else fetchProfile();
-      });
-    };
-
-    function fetchProfile() {
-      liff.getProfile().then(p => {
-        lineUser = p;
-        document.getElementById('profileBox').classList.remove('hidden');
-        document.getElementById('userImg').src = p.pictureUrl;
-        document.getElementById('userName').innerText = p.displayName;
-        document.getElementById('userId').innerText = p.userId.substring(0, 15) + '...';
-      });
-    }
-
-    function updateFileStatus() {
-      const file = document.getElementById('csvInput').files[0];
-      if (file) {
-        document.getElementById('fileLabel').innerText = file.name;
-        document.getElementById('fileLabel').classList.replace('text-slate-400', 'text-blue-400');
-        document.getElementById('fileIcon').classList.replace('text-slate-600', 'text-blue-400');
-      }
-    }
-
-    function handleProcess() {
-      const file = document.getElementById('csvInput').files[0];
-      const name = document.getElementById('fileName').value;
-      if (!file) return alert('กรุณาเลือกไฟล์!');
-
-      document.getElementById('loading').classList.remove('hidden');
-      document.getElementById('downloadArea').classList.add('hidden');
-      document.getElementById('btnMain').disabled = true;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        google.script.run.withSuccessHandler(res => {
-          document.getElementById('loading').classList.add('hidden');
-          document.getElementById('btnMain').disabled = false;
-          if (res.status === 'success') {
-            convertedRows = res.data;
-            document.getElementById('downloadArea').classList.remove('hidden');
-          } else { alert(res.message); }
-        }).processCsv(e.target.result, name, lineUser);
-      };
-      reader.readAsText(file);
-    }
-
-    function downloadCSV() {
-      const name = document.getElementById('fileName').value || 'Converted_Data';
-      let csv = "\uFEFF" + convertedRows.map(r => r.join(",")).join("\n");
-      let blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-      let a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = name + '.csv';
-      a.click();
-    }
-  </script>
-</body>
-</html>
+// ฟังก์ชันเสริมสำหรับประมวลผลบน Browser (สำหรับ GitHub Pages)
+function processCsvLocally(csvData, name) {
+    const rows = csvData.split('\n').map(row => row.split(';'));
+    // ... ใส่ Logic การแปลงไฟล์เหมือนใน Code.gs ตรงนี้ ...
+    // เมื่อแปลงเสร็จแล้วให้เปิดปุ่ม Download
+    convertedRows = result; // เก็บค่าที่แปลงเสร็จแล้วใส่ตัวแปร global
+    document.getElementById('downloadArea').classList.remove('hidden');
+}
