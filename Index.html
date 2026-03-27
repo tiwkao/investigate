@@ -5,92 +5,68 @@ function handleProcess() {
   if (!file) return alert('กรุณาเลือกไฟล์!');
   if (!lineUser) return alert('กรุณารอโหลดโปรไฟล์ LINE สักครู่');
 
-  // แสดงสถานะกำลังประมวลผล
   document.getElementById('loading').classList.remove('hidden');
   document.getElementById('downloadArea').classList.add('hidden');
   document.getElementById('btnMain').disabled = true;
 
   const reader = new FileReader();
   reader.onload = (e) => {
+    const csvContent = e.target.result;
     
-    // --- จุดสำคัญ: เปลี่ยนจาก google.script.run เป็น fetch ---
-    const webAppUrl = 'https://script.google.com/macros/s/AKfycbzzEbpnnyZoBzdRxaAniUtGqVSyXWkpscbBe-DZDYaCeEdtjnHLxJE5nBdi1r5nxhD9/exec'; 
-
+    // 1. ส่งข้อมูลไปบันทึก Log ที่ Google Sheets (แบบไม่รอผลตอบกลับเพื่อเลี่ยง CORS)
+    const webAppUrl = 'https://script.google.com/macros/s/AKfybzzEbpnnyZoBzdRxaAniUtGqVSyXDZDYacEedtjnHLXJE5nBdI1r5nxhD9/exec';
+    
     fetch(webAppUrl, {
       method: 'POST',
-      mode: 'no-cors', // สำคัญ: เพื่อให้ส่งข้อมูลข้าม Domain จาก GitHub ไป Google ได้
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        csv: e.target.result,
+        csv: "Log Only", // ไม่ส่งไฟล์ใหญ่ไปทาง Fetch เพื่อความเร็ว
         name: name,
         user: lineUser
       })
-    })
-    .then(() => {
-      // เนื่องจากใช้ no-cors เราจะไม่สามารถอ่านผลลัพธ์ JSON กลับมาได้โดยตรง 
-      // แต่เราสามารถเดาได้ว่าสำเร็จถ้าไม่มี Error (หรือปรับ Backend ให้ส่ง Redirect)
-      // เพื่อความง่ายในขั้นต้น ให้แสดงปุ่มดาวน์โหลดทันทีหลังจากส่งข้อมูลสำเร็จ
-      
-      // หมายเหตุ: การใช้ no-cors บน GitHub มีข้อจำกัดเรื่องการรับค่า Data กลับมา
-      // หากต้องการรับ Data กลับมาโชว์ด้วย แนะนำให้รันบน Google Apps Script โดยตรงจะดีที่สุดครับ
-      
-      alert('บันทึกข้อมูลลง Google Sheet เรียบร้อยแล้ว!');
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('btnMain').disabled = false;
-      
-      // กรณีใช้ GitHub: แนะนำให้ทำการแปลงไฟล์ที่ฝั่ง Client (Browser) แทนการรอค่าจาก Server
-      // เพื่อเลี่ยงปัญหาเรื่อง CORS
-      processCsvLocally(e.target.result, name); 
-    })
-    .catch(err => {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('btnMain').disabled = false;
-      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err);
     });
+
+    // 2. ประมวลผลแปลงไฟล์ทันทีบน Browser (ไม่ต้องพึ่ง Google Script)
+    processCsvLocally(csvContent, name);
   };
   reader.readAsText(file);
 }
 
-// ฟังก์ชันเสริมสำหรับประมวลผลบน Browser (สำหรับ GitHub Pages)
 function processCsvLocally(csvData, name) {
   try {
-    // แยกบรรทัดและคอลัมน์ (ใช้เซมิโคลอน ;)
-    const rows = csvData.split('\n').map(row => row.split(';'));
-    if (rows.length < 2) return alert('ไม่พบข้อมูลในไฟล์');
+    // แยกบรรทัดและคอลัมน์ (รองรับทั้ง ; และ ,)
+    const rows = csvData.split(/\r?\n/).map(row => {
+        return row.includes(';') ? row.split(';') : row.split(',');
+    });
 
-    // ค้นหาตำแหน่งหัวตาราง (Headers)
+    if (rows.length < 2) throw new Error('ไฟล์ไม่มีข้อมูล');
+
     const headers = rows[0].map(h => h.trim().toUpperCase());
     const idx = {
-      plmn: headers.indexOf('PLMN'), 
+      plmn: headers.indexOf('PLMN'),
       tac: headers.indexOf('LAC/TAC'),
-      xci: headers.indexOf('XCI'), 
+      xci: headers.indexOf('XCI'),
       enb: headers.indexOf('XNBID'),
-      cid: headers.indexOf('LOCAL_CID'), 
+      cid: headers.indexOf('LOCAL_CID'),
       band: headers.indexOf('BAND'),
-      lat: headers.indexOf('LAT'), 
+      lat: headers.indexOf('LAT'),
       lon: headers.indexOf('LON')
     };
 
-    // ตรวจสอบว่ามีคอลัมน์สำคัญครบไหม
-    if (idx.lat === -1 || idx.lon === -1) {
-      return alert('รูปแบบไฟล์ไม่ถูกต้อง (ขาดคอลัมน์ LAT/LON)');
-    }
+    if (idx.lat === -1 || idx.lon === -1) throw new Error('ไม่พบคอลัมน์ LAT หรือ LON');
 
-    // สร้างข้อมูลใหม่
     let result = [["TAC-ECI", "Enb", "PLMN", "BAND", "LATITUDE", "LONGITUDE"]];
     let count = 0;
 
     for (let i = 1; i < rows.length; i++) {
       let row = rows[i];
-      // ตรวจสอบว่าแถวไม่ว่างและมีพิกัด
-      if (row.length > 1 && row[idx.lat] && row[idx.lat].trim() !== "" && row[idx.lat] !== "0") {
+      if (row.length > 1 && row[idx.lat] && row[idx.lat] !== "0") {
         result.push([
-          (row[idx.tac] || "").trim() + "-" + (row[idx.xci] || "").trim(),
-          (row[idx.enb] || "").trim() + "-" + (row[idx.cid] || "").trim(),
-          (row[idx.plmn] || "").trim(),
-          (row[idx.band] || "").trim(),
+          `${(row[idx.tac]||"").trim()}-${(row[idx.xci]||"").trim()}`,
+          `${(row[idx.enb]||"").trim()}-${(row[idx.cid]||"").trim()}`,
+          (row[idx.plmn]||"").trim(),
+          (row[idx.band]||"").trim(),
           row[idx.lat].trim(),
           row[idx.lon].trim()
         ]);
@@ -98,15 +74,16 @@ function processCsvLocally(csvData, name) {
       }
     }
 
-    // เก็บผลลัพธ์ลงตัวแปร Global เพื่อให้ปุ่ม Download ใช้งานได้
+    // เก็บผลลัพธ์และแสดงปุ่มดาวน์โหลด
     convertedRows = result;
-
-    // แสดงปุ่มดาวน์โหลด
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('btnMain').disabled = false;
     document.getElementById('downloadArea').classList.remove('hidden');
-    console.log('Processed ' + count + ' rows successfully');
+    alert('บันทึก Log และประมวลผลสำเร็จ ' + count + ' รายการ');
 
   } catch (err) {
-    console.error(err);
-    alert('เกิดข้อผิดพลาดในการประมวลผลไฟล์: ' + err.message);
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('btnMain').disabled = false;
+    alert('เกิดข้อผิดพลาด: ' + err.message);
   }
 }
