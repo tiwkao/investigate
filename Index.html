@@ -1,84 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #050a18; }
-    .glass-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 2.5rem; }
-    .input-field { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
-    .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+    body { font-family: 'Sarabun', sans-serif; background: #050a18; }
+    .glass-card { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); border-radius: 2rem; }
+    .input-field { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s; }
+    .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
     .btn-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.2s; }
-    .btn-gradient:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4); }
-    /* ปรับแต่ง Profile Badge ให้ดูทันสมัยขึ้น */
-    .profile-badge { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-gradient:hover { transform: scale(1.02); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); }
+    .profile-badge { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+    /* เพิ่ม Animation เพื่อความทันสมัย */
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade { animation: fade 0.8s ease-out; }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 md:p-10">
+<body class="min-h-screen flex items-center justify-center p-3 md:p-10 animate-fade">
 
-  <!-- Main Card Container -->
-  <div class="glass-card w-full max-w-lg p-8 md:p-12 shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
+  <div class="glass-card w-full max-w-sm md:max-w-lg p-7 md:p-10 shadow-[0_15px_60px_rgba(0,0,0,0.6)] relative">
     
-    <!-- ย้าย Profile มาไว้ตรงนี้ (กึ่งกลางบนสุดของการ์ด) -->
-    <div id="profileBox" class="hidden mb-10">
-      <div class="flex flex-col items-center">
-        <div class="profile-badge flex items-center gap-4 p-2 pr-6 rounded-2xl shadow-xl">
-          <img id="userImg" class="w-14 h-14 rounded-xl border-2 border-blue-500/40 object-cover shadow-lg shadow-blue-500/20">
-          <div class="flex flex-col text-left">
-            <span id="userName" class="text-white text-base font-bold leading-tight uppercase tracking-wide">Loading...</span>
-            <span id="userId" class="text-blue-400 text-[10px] font-mono mt-1 opacity-80 uppercase tracking-tighter">ID: Fetching</span>
-          </div>
+    <div id="profileBox" class="hidden mb-7 flex flex-col items-center">
+      <div class="profile-badge flex items-center gap-3 p-2 pr-5 rounded-2xl shadow-xl">
+        <img id="userImg" class="w-12 h-12 rounded-xl border border-blue-500/30 object-cover shadow-lg shadow-blue-500/10">
+        <div class="text-left">
+          <span id="userName" class="text-white text-sm font-bold leading-tight uppercase tracking-wide">Loading...</span>
+          <span id="userId" class="text-blue-400 text-[9px] font-mono mt-1 opacity-80 uppercase tracking-tight">ID: Fetching</span>
         </div>
-        <!-- เส้นแบ่งเบาๆ -->
-        <div class="w-24 h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent mt-8"></div>
       </div>
+      <div class="w-16 h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent mt-6"></div>
     </div>
 
-    <!-- Header Section -->
-    <div class="text-center mb-10">
-      <div class="inline-flex p-4 rounded-[2rem] bg-blue-500/10 mb-6 border border-blue-500/20 shadow-inner">
-        <i class="fa-solid fa-satellite-dish text-4xl text-blue-500"></i>
+    <div class="text-center mb-8">
+      <div class="inline-flex p-3 rounded-3xl bg-blue-500/10 mb-5 border border-blue-500/15">
+        <i class="fa-solid fa-satellite-dish text-3xl text-blue-500"></i>
       </div>
-      <h1 class="text-3xl font-extrabold text-white tracking-tight">Converter <span class="text-blue-500">Pro</span></h1>
-      <p class="text-slate-500 mt-3 font-light text-sm tracking-wide">G-Mon Pro Data Transformation Engine</p>
+      <h1 class="text-2xl font-extrabold text-white tracking-tight">Converter <span class="text-blue-500">Pro</span></h1>
+      <p class="text-slate-500 mt-2 font-light text-xs tracking-wide">G-Mon Data Engine</p>
     </div>
 
-    <!-- Input Form -->
-    <div class="space-y-6">
+    <div class="space-y-5">
       <div class="group">
-        <label class="text-[10px] uppercase font-bold text-blue-500 tracking-[0.2em] ml-1">Project Name</label>
-        <input type="text" id="fileName" class="input-field w-full mt-2 p-5 rounded-2xl text-white outline-none text-sm" placeholder="เช่น บ้านปรัชญาภรณ์_เขต8">
+        <label class="text-[9px] uppercase font-bold text-blue-500 tracking-[0.2em] ml-1">Project Name</label>
+        <input type="text" id="fileName" class="input-field w-full mt-1 p-3.5 rounded-xl text-white outline-none text-sm" placeholder="เช่น บ้านปรัชญาภรณ์_ZoneA">
       </div>
 
       <div class="relative">
         <input type="file" id="csvInput" class="hidden" accept=".csv" onchange="updateFileStatus()">
-        <label for="csvInput" class="input-field flex flex-col items-center justify-center w-full h-44 rounded-[2rem] cursor-pointer hover:bg-white/5 border-dashed border-2 border-slate-700/50 group transition-all">
-          <div class="p-4 rounded-full bg-slate-800/50 mb-3 group-hover:scale-110 transition-transform">
-            <i id="fileIcon" class="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 group-hover:text-blue-500"></i>
-          </div>
-          <span id="fileLabel" class="text-slate-400 text-sm font-medium italic tracking-wide">คลิกเพื่อเลือกไฟล์ CSV (;)</span>
+        <label for="csvInput" class="input-field flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer hover:bg-white/5 border-dashed border-2 border-slate-700/50 transition-all">
+          <i id="fileIcon" class="fa-solid fa-cloud-arrow-up text-3xl text-slate-600 mb-2 group-hover:text-blue-500"></i>
+          <span id="fileLabel" class="text-slate-400 text-xs font-medium italic">เลือกไฟล์ CSV (;)</span>
         </label>
       </div>
 
-      <button onclick="handleProcess()" id="btnMain" class="btn-gradient w-full py-5 rounded-[1.5rem] text-white font-black tracking-widest text-sm flex items-center justify-center gap-3">
-        <i class="fa-solid fa-bolt-lightning"></i> PROCESS NOW
+      <button onclick="handleProcess()" id="btnMain" class="btn-gradient w-full py-4.5 rounded-xl text-white font-black tracking-widest text-xs flex items-center justify-center gap-3">
+        <i class="fa-solid fa-bolt-lightning"></i> CONVERT DATA
       </button>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loading" class="hidden mt-8 text-center animate-pulse">
-      <span class="text-blue-500 text-[10px] font-black tracking-[0.3em] uppercase">Engine Processing...</span>
+    <div id="loading" class="hidden mt-6 text-center animate-pulse">
+      <span class="text-blue-500 text-[9px] font-bold tracking-[0.2em] uppercase">Engine Running...</span>
     </div>
 
-    <!-- Result & Download -->
-    <div id="downloadArea" class="hidden mt-10 p-1 rounded-3xl bg-gradient-to-br from-emerald-500/40 to-blue-500/10">
-      <button onclick="downloadCSV()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-5 rounded-[1.4rem] transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20">
-        <i class="fa-solid fa-file-circle-check text-xl"></i> DOWNLOAD RESULT
+    <div id="downloadArea" class="hidden mt-8 p-1 rounded-2xl bg-gradient-to-br from-emerald-500/40 to-blue-500/10">
+      <button onclick="downloadCSV()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4.5 rounded-xl transition-all flex items-center justify-center gap-3">
+        <i class="fa-solid fa-file-arrow-down text-lg"></i> DOWNLOAD RESULT
       </button>
     </div>
+
+    <div class="absolute bottom-3 right-5 text-[9px] text-slate-600 font-light opacity-80">
+      ผู้พัฒนา "พงศกร  IDP6"
+    </div>
+
   </div>
 
   <script>
@@ -91,7 +87,7 @@
       liff.init({ liffId: LIFF_ID }).then(() => {
         if (!liff.isLoggedIn()) liff.login();
         else fetchProfile();
-      }).catch(err => console.error(err));
+      });
     };
 
     function fetchProfile() {
@@ -100,7 +96,7 @@
         document.getElementById('profileBox').classList.remove('hidden');
         document.getElementById('userImg').src = p.pictureUrl;
         document.getElementById('userName').innerText = p.displayName;
-        document.getElementById('userId').innerText = p.userId.substring(0, 18) + '...';
+        document.getElementById('userId').innerText = p.userId.substring(0, 15) + '...';
       });
     }
 
@@ -109,7 +105,7 @@
       if (file) {
         document.getElementById('fileLabel').innerText = file.name;
         document.getElementById('fileLabel').classList.replace('text-slate-400', 'text-blue-400');
-        document.getElementById('fileIcon').classList.replace('text-slate-500', 'text-blue-400');
+        document.getElementById('fileIcon').classList.replace('text-slate-600', 'text-blue-400');
       }
     }
 
