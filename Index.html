@@ -55,9 +55,58 @@ function handleProcess() {
 
 // ฟังก์ชันเสริมสำหรับประมวลผลบน Browser (สำหรับ GitHub Pages)
 function processCsvLocally(csvData, name) {
+  try {
+    // แยกบรรทัดและคอลัมน์ (ใช้เซมิโคลอน ;)
     const rows = csvData.split('\n').map(row => row.split(';'));
-    // ... ใส่ Logic การแปลงไฟล์เหมือนใน Code.gs ตรงนี้ ...
-    // เมื่อแปลงเสร็จแล้วให้เปิดปุ่ม Download
-    convertedRows = result; // เก็บค่าที่แปลงเสร็จแล้วใส่ตัวแปร global
+    if (rows.length < 2) return alert('ไม่พบข้อมูลในไฟล์');
+
+    // ค้นหาตำแหน่งหัวตาราง (Headers)
+    const headers = rows[0].map(h => h.trim().toUpperCase());
+    const idx = {
+      plmn: headers.indexOf('PLMN'), 
+      tac: headers.indexOf('LAC/TAC'),
+      xci: headers.indexOf('XCI'), 
+      enb: headers.indexOf('XNBID'),
+      cid: headers.indexOf('LOCAL_CID'), 
+      band: headers.indexOf('BAND'),
+      lat: headers.indexOf('LAT'), 
+      lon: headers.indexOf('LON')
+    };
+
+    // ตรวจสอบว่ามีคอลัมน์สำคัญครบไหม
+    if (idx.lat === -1 || idx.lon === -1) {
+      return alert('รูปแบบไฟล์ไม่ถูกต้อง (ขาดคอลัมน์ LAT/LON)');
+    }
+
+    // สร้างข้อมูลใหม่
+    let result = [["TAC-ECI", "Enb", "PLMN", "BAND", "LATITUDE", "LONGITUDE"]];
+    let count = 0;
+
+    for (let i = 1; i < rows.length; i++) {
+      let row = rows[i];
+      // ตรวจสอบว่าแถวไม่ว่างและมีพิกัด
+      if (row.length > 1 && row[idx.lat] && row[idx.lat].trim() !== "" && row[idx.lat] !== "0") {
+        result.push([
+          (row[idx.tac] || "").trim() + "-" + (row[idx.xci] || "").trim(),
+          (row[idx.enb] || "").trim() + "-" + (row[idx.cid] || "").trim(),
+          (row[idx.plmn] || "").trim(),
+          (row[idx.band] || "").trim(),
+          row[idx.lat].trim(),
+          row[idx.lon].trim()
+        ]);
+        count++;
+      }
+    }
+
+    // เก็บผลลัพธ์ลงตัวแปร Global เพื่อให้ปุ่ม Download ใช้งานได้
+    convertedRows = result;
+
+    // แสดงปุ่มดาวน์โหลด
     document.getElementById('downloadArea').classList.remove('hidden');
+    console.log('Processed ' + count + ' rows successfully');
+
+  } catch (err) {
+    console.error(err);
+    alert('เกิดข้อผิดพลาดในการประมวลผลไฟล์: ' + err.message);
+  }
 }
