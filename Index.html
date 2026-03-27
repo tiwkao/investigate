@@ -59,14 +59,51 @@
       if (file) document.getElementById('fileLabel').innerText = file.name;
     }
 
-    function startProcess() {
-      const file = document.getElementById('csvInput').files[0];
-      if (!file) return alert('กรุณาเลือกไฟล์ก่อนครับ');
+    /* แก้ไขเฉพาะฟังก์ชัน startProcess ในส่วน Script ของ Index.html เดิม */
+
+let userProfile = null; // ตัวแปรเก็บค่าโปรไฟล์
+
+// ฟังก์ชันดึงโปรไฟล์จาก LIFF (เรียกใช้ตอน init)
+function getUserProfile() {
+  liff.getProfile().then(profile => {
+    userProfile = profile; // เก็บค่าไว้ใช้ตอนกดปุ่มแปลงไฟล์
+    document.getElementById('profileHeader').classList.remove('hidden');
+    document.getElementById('userImg').src = profile.pictureUrl;
+    document.getElementById('userName').innerText = profile.displayName;
+    document.getElementById('userId').innerText = profile.userId;
+  });
+}
+
+function startProcess() {
+  const fileInput = document.getElementById('csvInput');
+  const file = fileInput.files[0];
+  const customName = document.getElementById('fileName').value;
+
+  if (!file) return alert('กรุณาเลือกไฟล์ก่อนครับ');
+  if (!userProfile) return alert('กรุณารอการโหลดโปรไฟล์ LINE สักครู่');
+
+  document.getElementById('loader').classList.remove('hidden');
+  document.getElementById('downloadSection').classList.add('hidden');
+  document.getElementById('mainBtn').disabled = true;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // ส่งข้อมูล 3 ส่วน: เนื้อหาไฟล์, ชื่อไฟล์ที่ตั้ง, และข้อมูล User
+    google.script.run.withSuccessHandler(function(response) {
+      document.getElementById('loader').classList.add('hidden');
+      document.getElementById('mainBtn').disabled = false;
       
-      document.getElementById('loader').classList.remove('hidden');
-      document.getElementById('downloadSection').classList.add('hidden');
-      document.getElementById('mainBtn').disabled = true;
-      document.getElementById('mainBtn').classList.add('opacity-50');
+      if (response.status === 'success') {
+        resultData = response.data;
+        document.getElementById('downloadSection').classList.remove('hidden');
+        console.log("บันทึกข้อมูลลง Sheet เรียบร้อย: " + response.count + " แถว");
+      } else {
+        alert(response.message);
+      }
+    }).processCsv(e.target.result, customName, userProfile);
+  };
+  reader.readAsText(file);
+}
 
       const reader = new FileReader();
       reader.onload = function(e) {
